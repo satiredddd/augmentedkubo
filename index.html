@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MindAR Product AR</title>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+    <!-- MindAR -->
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-world-aframe.prod.js"></script>
+
+    <!-- Gesture controls -->
+    <script src="https://cdn.jsdelivr.net/npm/aframe-gesture-detector/dist/aframe-gesture-detector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-gesture-handler/dist/aframe-gesture-handler.min.js"></script>
+
+    <style>
+      body { margin: 0; overflow: hidden; }
+      #hint {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.6);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="hint">Tap to place product • Pinch to scale • Rotate with two fingers</div>
+
+    <a-scene
+      mindar-world
+      embedded
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      gesture-detector>
+
+      <!-- Camera -->
+      <a-camera position="0 1.6 0"></a-camera>
+
+      <!-- Product -->
+      <a-entity
+        id="product"
+        gltf-model="https://modelviewer.dev/shared-assets/models/Chair.glb"
+        scale="0.4 0.4 0.4"
+        position="0 0 -1"
+        rotation="0 0 0"
+        gesture-handler>
+      </a-entity>
+
+    </a-scene>
+  </body>
+</html>
