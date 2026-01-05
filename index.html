@@ -3,232 +3,552 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AR Camera Test</title>
+    <title>Kubo PH AR</title>
+
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    
+    <!-- AR.js -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
+    <!-- Gesture Handler -->
+    <script src="https://cdn.jsdelivr.net/gh/fcor/arjs-gestures@master/dist/gestures.js"></script>
+
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: Arial, sans-serif;
-        background: #000;
-        color: white;
+      body { 
+        margin: 0; 
         overflow: hidden;
+        font-family: 'Arial', sans-serif;
       }
-      
-      #camera-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-      }
-      
-      #camera {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      
-      #overlay {
+
+      #ui-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         pointer-events: none;
-        z-index: 10;
+        z-index: 100;
       }
-      
-      #status {
+
+      #status-bar {
         position: fixed;
         top: 20px;
         left: 20px;
         right: 20px;
-        background: rgba(0,0,0,0.8);
-        padding: 15px;
-        border-radius: 10px;
-        font-size: 14px;
-        z-index: 100;
-      }
-      
-      #chair {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 100px;
-        z-index: 50;
-        display: none;
-        animation: bounce 0.5s ease-out;
-      }
-      
-      @keyframes bounce {
-        0% { transform: translate(-50%, -50%) scale(0); }
-        50% { transform: translate(-50%, -50%) scale(1.2); }
-        100% { transform: translate(-50%, -50%) scale(1); }
-      }
-      
-      #start-btn {
-        position: fixed;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #4CAF50;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(10px);
+        padding: 15px 20px;
+        border-radius: 15px;
         color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 25px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 100;
+        font-size: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
       }
-      
-      #start-btn:active {
-        background: #45a049;
+
+      #status-bar.success {
+        background: rgba(76, 175, 80, 0.9);
       }
-      
-      .spinner {
+
+      #status-bar.error {
+        background: rgba(244, 67, 54, 0.9);
+      }
+
+      .status-icon {
         display: inline-block;
         width: 20px;
         height: 20px;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+
+      .spinner {
         border: 3px solid rgba(255,255,255,0.3);
         border-top: 3px solid white;
         border-radius: 50%;
         animation: spin 1s linear infinite;
-        vertical-align: middle;
-        margin-right: 10px;
       }
-      
+
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+
+      #instructions {
+        position: fixed;
+        bottom: 30px;
+        left: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 15px;
+        color: white;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      }
+
+      #instructions h3 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        color: #4CAF50;
+      }
+
+      .instruction-item {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+
+      .instruction-icon {
+        font-size: 24px;
+        margin-right: 15px;
+        min-width: 30px;
+      }
+
+      #place-button {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 18px 40px;
+        border-radius: 30px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        pointer-events: all;
+        transition: all 0.3s ease;
+        display: none;
+      }
+
+      #place-button:active {
+        transform: translateX(-50%) scale(0.95);
+      }
+
+      #place-button.visible {
+        display: block;
+      }
+
+      .controls-hint {
+        position: fixed;
+        bottom: 120px;
+        left: 20px;
+        right: 20px;
+        background: rgba(76, 175, 80, 0.9);
+        backdrop-filter: blur(10px);
+        padding: 15px;
+        border-radius: 12px;
+        color: white;
+        text-align: center;
+        font-size: 13px;
+        display: none;
+        animation: fadeInUp 0.5s ease;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .controls-hint.visible {
+        display: block;
+      }
+
+      #crosshair {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.3);
+        pointer-events: none;
+      }
+
+      #crosshair::before,
+      #crosshair::after {
+        content: '';
+        position: absolute;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      #crosshair::before {
+        top: 50%;
+        left: 10px;
+        right: 10px;
+        height: 3px;
+        transform: translateY(-50%);
+      }
+
+      #crosshair::after {
+        left: 50%;
+        top: 10px;
+        bottom: 10px;
+        width: 3px;
+        transform: translateX(-50%);
+      }
+
+      #debug {
+        position: fixed;
+        top: 90px;
+        left: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 8px;
+        color: lime;
+        font-family: monospace;
+        font-size: 11px;
+        max-height: 100px;
+        overflow-y: auto;
+        display: none;
+      }
+
+      #debug.visible {
+        display: block;
+      }
     </style>
   </head>
+
   <body>
-    
-    <div id="status">
-      <div class="spinner"></div>
-      <span id="status-text">Initializing...</span>
+    <div id="ui-overlay">
+      <div id="status-bar">
+        <div class="status-icon spinner"></div>
+        <span id="status-text">Initializing AR...</span>
+      </div>
+
+      <div id="instructions">
+        <h3>📱 How to Use AR</h3>
+        <div class="instruction-item">
+          <span class="instruction-icon">👆</span>
+          <span>Point camera at a flat surface (floor, table, desk)</span>
+        </div>
+        <div class="instruction-item">
+          <span class="instruction-icon">📍</span>
+          <span>Tap "Place Chair" button to position furniture</span>
+        </div>
+        <div class="instruction-item">
+          <span class="instruction-icon">🤏</span>
+          <span>Pinch with two fingers to scale</span>
+        </div>
+        <div class="instruction-item">
+          <span class="instruction-icon">🔄</span>
+          <span>Rotate with two fingers to turn</span>
+        </div>
+        <div class="instruction-item">
+          <span class="instruction-icon">👉</span>
+          <span>Drag with one finger to move</span>
+        </div>
+      </div>
+
+      <div id="crosshair"></div>
+
+      <button id="place-button">📍 Place Chair</button>
+
+      <div id="controls-hint" class="controls-hint">
+        ✨ Chair placed! Use gestures to move, scale, or rotate
+      </div>
+
+      <div id="debug"></div>
     </div>
-    
-    <div id="camera-container">
-      <video id="camera" autoplay playsinline></video>
-    </div>
-    
-    <div id="overlay">
-      <div id="chair">🪑</div>
-    </div>
-    
-    <button id="start-btn" onclick="placeChair()">📍 Place Chair</button>
-    
-    <script>
-      const video = document.getElementById('camera');
-      const status = document.getElementById('status-text');
-      const statusBox = document.getElementById('status');
-      const chair = document.getElementById('chair');
-      const btn = document.getElementById('start-btn');
-      
-      let chairPlaced = false;
-      
-      function updateStatus(msg, isError = false) {
-        console.log(msg);
-        status.textContent = msg;
-        statusBox.style.background = isError ? 'rgba(255,0,0,0.8)' : 'rgba(0,0,0,0.8)';
+
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; trackingMethod: best;"
+      embedded
+      gesture-detector
+      id="scene">
+
+      <a-assets>
+        <!-- Preload assets here if needed -->
+      </a-assets>
+
+      <!-- Camera with gesture controls -->
+      <a-camera 
+        gps-camera 
+        rotation-reader 
+        look-controls-enabled="false"
+        arjs-look-controls="smoothingFactor: 0.1">
+      </a-camera>
+
+      <!-- AR Furniture Entity (3D Chair) -->
+      <a-entity 
+        id="furniture"
+        visible="false"
+        gesture-handler="minScale: 0.3; maxScale: 3">
         
-        if (!isError) {
-          // Hide status after 3 seconds if success
-          setTimeout(() => {
-            statusBox.style.display = 'none';
-          }, 3000);
-        }
+        <!-- Chair Seat -->
+        <a-box 
+          position="0 0.5 0" 
+          width="0.5" 
+          height="0.1" 
+          depth="0.5"
+          color="#8B4513"
+          shadow="cast: true; receive: false">
+        </a-box>
+        
+        <!-- Chair Back -->
+        <a-box 
+          position="0 0.8 -0.2" 
+          width="0.5" 
+          height="0.5" 
+          depth="0.1"
+          color="#8B4513"
+          shadow="cast: true; receive: false">
+        </a-box>
+        
+        <!-- Chair Legs -->
+        <a-cylinder position="-0.2 0.25 -0.2" radius="0.03" height="0.5" color="#654321" shadow></a-cylinder>
+        <a-cylinder position="0.2 0.25 -0.2" radius="0.03" height="0.5" color="#654321" shadow></a-cylinder>
+        <a-cylinder position="-0.2 0.25 0.2" radius="0.03" height="0.5" color="#654321" shadow></a-cylinder>
+        <a-cylinder position="0.2 0.25 0.2" radius="0.03" height="0.5" color="#654321" shadow></a-cylinder>
+
+        <!-- Ground Shadow -->
+        <a-circle 
+          position="0 0.01 0" 
+          radius="0.35" 
+          rotation="-90 0 0" 
+          color="#000000" 
+          opacity="0.3"
+          shader="flat">
+        </a-circle>
+
+        <!-- Visual anchor indicator -->
+        <a-ring
+          position="0 0.02 0"
+          radius-inner="0.4"
+          radius-outer="0.45"
+          color="#4CAF50"
+          rotation="-90 0 0"
+          opacity="0.6"
+          animation="property: rotation; to: -90 360 0; loop: true; dur: 4000; easing: linear">
+        </a-ring>
+
+      </a-entity>
+
+      <!-- Ground plane for shadows -->
+      <a-plane 
+        position="0 0 0" 
+        rotation="-90 0 0" 
+        width="10" 
+        height="10" 
+        color="#7BC8A4" 
+        shadow="receive: true"
+        visible="false"
+        id="ground-plane">
+      </a-plane>
+
+      <!-- Ambient light -->
+      <a-light type="ambient" intensity="0.8"></a-light>
+      <a-light type="directional" intensity="0.5" position="1 1 1"></a-light>
+
+    </a-scene>
+
+    <script>
+      // Elements
+      const scene = document.getElementById('scene');
+      const furniture = document.getElementById('furniture');
+      const groundPlane = document.getElementById('ground-plane');
+      const statusBar = document.getElementById('status-bar');
+      const statusText = document.getElementById('status-text');
+      const instructions = document.getElementById('instructions');
+      const placeButton = document.getElementById('place-button');
+      const controlsHint = document.getElementById('controls-hint');
+      const crosshair = document.getElementById('crosshair');
+      const debugDiv = document.getElementById('debug');
+
+      // State
+      let isPlaced = false;
+      let isARReady = false;
+      let logs = [];
+
+      // Logging
+      function log(msg, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        logs.push(`[${timestamp}] ${msg}`);
+        if (logs.length > 10) logs.shift();
+        console.log(msg);
+        debugDiv.innerHTML = logs.join('<br>');
       }
-      
-      function placeChair() {
-        if (!chairPlaced) {
-          chair.style.display = 'block';
-          chairPlaced = true;
-          btn.textContent = '✅ Chair Placed!';
-          btn.style.background = '#2196F3';
-          
-          setTimeout(() => {
-            btn.textContent = '📍 Move Chair';
-            btn.style.background = '#4CAF50';
-          }, 2000);
-        } else {
-          // Re-animate
-          chair.style.animation = 'none';
-          setTimeout(() => {
-            chair.style.animation = 'bounce 0.5s ease-out';
-          }, 10);
-        }
+
+      // Update status
+      function updateStatus(msg, type = 'loading') {
+        statusText.textContent = msg;
+        statusBar.className = type;
+        log(msg);
       }
-      
-      // Start camera
-      async function startCamera() {
-        try {
-          updateStatus('Requesting camera access...');
-          
-          // Check if getUserMedia is available
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('Camera API not supported in this browser');
-          }
-          
-          // Request camera with environment (back) camera
-          const constraints = {
-            video: {
-              facingMode: { ideal: 'environment' },
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            },
-            audio: false
-          };
-          
-          updateStatus('Opening camera...');
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          
-          video.srcObject = stream;
-          
-          video.onloadedmetadata = () => {
-            updateStatus('✅ Camera ready! Tap button to place chair');
-          };
-          
-        } catch (err) {
-          console.error('Camera error:', err);
-          updateStatus(`❌ Camera Error: ${err.message}`, true);
-          
-          // Show helpful message
-          setTimeout(() => {
-            if (confirm('Camera access denied. Would you like to see instructions?')) {
-              alert('Please:\n1. Go to your device Settings\n2. Find this app\n3. Enable Camera permission\n4. Restart the app');
-            }
-          }, 1000);
+
+      // Show debug (tap 5 times on status bar)
+      let tapCount = 0;
+      statusBar.addEventListener('click', () => {
+        tapCount++;
+        if (tapCount >= 5) {
+          debugDiv.classList.toggle('visible');
+          tapCount = 0;
         }
-      }
-      
-      // Start on load
+        setTimeout(() => tapCount = 0, 2000);
+      });
+
+      // Initialize
       window.addEventListener('load', () => {
-        setTimeout(startCamera, 500);
+        log('Page loaded');
+        setTimeout(() => {
+          checkCamera();
+        }, 1000);
       });
-      
-      // Handle page visibility
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden && video.srcObject) {
-          video.srcObject.getTracks().forEach(track => track.stop());
-        } else if (!document.hidden) {
-          startCamera();
+
+      // Check camera
+      async function checkCamera() {
+        try {
+          updateStatus('Checking camera access...', 'loading');
+          
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Camera API not supported');
+          }
+
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+          });
+          
+          log('Camera access granted ✓');
+          stream.getTracks().forEach(track => track.stop());
+          
+          updateStatus('AR Ready! Point at a flat surface', 'success');
+          isARReady = true;
+          
+          // Show place button and hide instructions after 3 seconds
+          setTimeout(() => {
+            instructions.style.display = 'none';
+            placeButton.classList.add('visible');
+          }, 3000);
+
+        } catch (err) {
+          log(`Camera error: ${err.message}`, 'error');
+          updateStatus(`Camera Error: ${err.message}`, 'error');
+          
+          setTimeout(() => {
+            if (confirm('Camera access denied. Enable in settings?')) {
+              alert('Settings → Apps → This App → Permissions → Camera');
+            }
+          }, 1500);
+        }
+      }
+
+      // Place furniture
+      placeButton.addEventListener('click', () => {
+        if (!isARReady) return;
+
+        const camera = document.querySelector('a-camera');
+        if (!camera) return;
+
+        const cameraPos = camera.getAttribute('position');
+        const cameraRot = camera.getAttribute('rotation');
+
+        // Calculate position 1.5m in front of camera
+        const distance = 1.5;
+        const radY = THREE.Math.degToRad(cameraRot.y);
+        
+        const newPos = {
+          x: cameraPos.x - Math.sin(radY) * distance,
+          y: 0, // Place on ground
+          z: cameraPos.z - Math.cos(radY) * distance
+        };
+
+        if (!isPlaced) {
+          // First placement
+          furniture.setAttribute('position', newPos);
+          furniture.setAttribute('visible', 'true');
+          groundPlane.setAttribute('visible', 'true');
+          groundPlane.setAttribute('position', newPos);
+          
+          // Animate in
+          furniture.setAttribute('animation', 
+            'property: scale; from: 0 0 0; to: 1 1 1; dur: 500; easing: easeOutElastic');
+          
+          isPlaced = true;
+          placeButton.textContent = '✅ Placed!';
+          placeButton.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+          
+          // Show controls hint
+          controlsHint.classList.add('visible');
+          crosshair.style.display = 'none';
+          
+          log('Furniture placed at ' + JSON.stringify(newPos));
+          updateStatus('Furniture placed! Use gestures to adjust', 'success');
+          
+          setTimeout(() => {
+            placeButton.textContent = '📍 Move Here';
+            placeButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            controlsHint.classList.remove('visible');
+            
+            setTimeout(() => {
+              statusBar.style.display = 'none';
+            }, 2000);
+          }, 3000);
+          
+        } else {
+          // Move to new position
+          furniture.setAttribute('position', newPos);
+          groundPlane.setAttribute('position', newPos);
+          
+          // Quick scale animation
+          furniture.setAttribute('animation', 
+            'property: scale; from: 1 1 1; to: 1.1 1.1 1.1; dur: 200; direction: alternate; loop: 1');
+          
+          log('Furniture moved to ' + JSON.stringify(newPos));
+          
+          placeButton.textContent = '✅ Moved!';
+          setTimeout(() => {
+            placeButton.textContent = '📍 Move Here';
+          }, 1500);
         }
       });
-      
-      // Log device info
-      console.log('User Agent:', navigator.userAgent);
-      console.log('Platform:', navigator.platform);
-      console.log('MediaDevices available:', !!navigator.mediaDevices);
+
+      // Scene loaded
+      scene.addEventListener('loaded', () => {
+        log('AR scene loaded ✓');
+      });
+
+      // Track camera movement (for advanced users)
+      scene.addEventListener('renderstart', () => {
+        if (isPlaced) {
+          const camera = document.querySelector('a-camera');
+          const furniturePos = furniture.getAttribute('position');
+          const cameraPos = camera.getAttribute('position');
+          
+          // Calculate distance to furniture
+          const dx = cameraPos.x - furniturePos.x;
+          const dz = cameraPos.z - furniturePos.z;
+          const distance = Math.sqrt(dx * dx + dz * dz);
+          
+          // Log distance every 2 seconds (for testing anchoring)
+          if (!this.lastLog || Date.now() - this.lastLog > 2000) {
+            log(`Distance to furniture: ${distance.toFixed(2)}m`);
+            this.lastLog = Date.now();
+          }
+        }
+      });
+
+      // Error handling
+      window.addEventListener('error', (e) => {
+        log(`Error: ${e.message}`, 'error');
+      });
+
+      // Device info
+      log(`Device: ${navigator.userAgent.substring(0, 50)}...`);
+      log(`Platform: ${navigator.platform}`);
     </script>
-    
   </body>
 </html>
